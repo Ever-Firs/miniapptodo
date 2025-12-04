@@ -60,6 +60,7 @@ func main() {
 	r.Get("/task", getTask)
 	r.Post("/task", postTask)
 	r.Patch("/task/{id}", updateTask)
+	r.Delete("/task/{id}", deleteTask)
 
 	http.ListenAndServe(":8080", r)
 }
@@ -154,4 +155,24 @@ func updateTask(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(t)
+}
+
+func deleteTask(w http.ResponseWriter, r *http.Request) {
+	strid := chi.URLParam(r, "id")
+	id, err := strconv.Atoi(strid)
+
+	if err != nil {
+		http.Error(w, "неверный ID задачи", http.StatusBadRequest)
+	}
+
+	_, err = db.Exec(`
+	DELETE FROM tasks WHERE id = $1
+	`, id)
+	if err != nil {
+		http.Error(w, "ошибка", 500)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+
 }
